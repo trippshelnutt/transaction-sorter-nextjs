@@ -10,7 +10,6 @@ import MonthSelect from './MonthSelect';
 import TransactionTable from './TransactionTable';
 import './Transactions.css';
 import YearSelect from './YearSelect';
-import { apiSite } from './settings.json';
 
 export default function App() {
   const currentDate = new Date();
@@ -23,7 +22,7 @@ export default function App() {
   const [year, setYear] = React.useState(currentYear);
 
   const handleFetchClicked = async () => {
-    const apiUrl = new URL(`/Prod/api/transactions/${category}/${year}/${month}`, apiSite);
+    const apiUrl = new URL(`/Prod/api/transactions/${category}/${year}/${month}`, 'https://d06jy95pk9.execute-api.us-east-1.amazonaws.com');
     console.log(apiUrl.href);
     const response = await fetch(apiUrl.href);
     const data = await response.json();
