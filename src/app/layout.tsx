@@ -3,8 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 
 import { Button } from '@mui/material';
 
-import { Login } from '@/components/Login';
-
 import { auth0 } from '@/lib/auth0';
 
 import './globals.css';
@@ -47,7 +45,15 @@ export default async function RootLayout({
           <title>{title}</title>
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <Login />
+          <div className="app">
+            <header className="app-header">
+              <p>{title}</p>
+              <p>Please log in to continue.</p>
+            </header>
+            <Button variant="contained" color="primary" href="/auth/login">
+              Log in
+            </Button>
+          </div>
         </body>
       </html>
     );
