@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 
-import { Button, Container, Typography } from '@mui/material';
+import { Button } from '@mui/material';
 
 import { Login } from '@/components/Login';
 
@@ -42,6 +42,10 @@ export default async function RootLayout({
   if (!session) {
     return (
       <html lang="en">
+        <head>
+          <link rel="shortcut icon" href="favicon.ico" />
+          <title>{title}</title>
+        </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <Login />
         </body>
@@ -51,18 +55,21 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <link rel="shortcut icon" href="favicon.ico" />
+        <title>{title}</title>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <Container>
-          <Typography variant="h2" component="h1" sx={{ textAlign: 'center', mt: 4 }}>
-            {title}
-            <br />
-            Welcome, {user?.name || 'User'}!
-          </Typography>
+        <div className="app">
+          <header className="app-header">
+            <p>{title}</p>
+            <p>Welcome, {user?.name || 'User'}!</p>
+          </header>
           {children}
           <Button variant="contained" color="secondary" href="/auth/logout" sx={{ mt: 2 }}>
             Log out
           </Button>
-        </Container>
+        </div>
       </body>
     </html>
   );

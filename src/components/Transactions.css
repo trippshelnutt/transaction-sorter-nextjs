@@ -1,16 +1,3 @@
-.app {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: black;
-  gap: 20px;
-}
-
-.app-header {
-  font-size: calc(10px + 2vmin);
-}
-
 .app-section {
   display: flex;
   flex-direction: column;
