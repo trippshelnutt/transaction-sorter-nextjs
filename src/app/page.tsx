@@ -2,7 +2,7 @@ import { Typography, Container, Button } from '@mui/material';
 import { auth0 } from '@/lib/auth0';
 
 async function getTitle() {
-  const res = await fetch('http://localhost:3000/api/title', { cache: 'no-store' });
+  const res = await fetch(`${process.env.APP_BASE_URL}/api/title`, { cache: 'no-store' });
   const data = await res.json();
   return data.title;
 }
