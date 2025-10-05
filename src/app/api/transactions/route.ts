@@ -25,6 +25,24 @@ const YNAB_API_URL = process.env.YNAB_API_URL || 'https://api.ynab.com/v1';
 const YNAB_BUDGET_ID = process.env.YNAB_BUDGET_ID;
 const YNAB_ACCESS_TOKEN = process.env.YNAB_ACCESS_TOKEN;
 
+// Helper to fetch a transaction by ID from YNAB and return its payee name
+async function fetchParentTransactionPayee(parent_transaction_id: string | undefined): Promise<string> {
+  if (!parent_transaction_id) return '';
+
+  const url = `${YNAB_API_URL}/budgets/${YNAB_BUDGET_ID}/transactions/${parent_transaction_id}`;
+  const resp = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${YNAB_ACCESS_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  });
+  if (!resp.ok) return '';
+  const data = await resp.json();
+  const t = data?.data?.transaction;
+  return t?.payee_name ?? t?.payeeName ?? t?.payee ?? '';
+}
+
 // Map category name to YNAB category ID (should be set in env or config)
 function getCategoryId(category: string): string | undefined {
   // Example: process.env.YNAB_CATEGORY_FOOD for category 'food'
@@ -38,6 +56,7 @@ type YnabTransaction = {
   payee_name?: string;
   payeeName?: string;
   payee?: string;
+  parent_transaction_id?: string;
   // ...other fields if needed
 };
 
@@ -97,24 +116,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
     const raw = await ynabResponse.json();
+
     // YNAB response: { data: { transactions: [...] } }
     const transactions = raw?.data?.transactions || [];
+
     // Filter and normalize
-    const normalized: TransactionItem[] = transactions
-      .filter((t: YnabTransaction) => {
-        // Only include transactions within the month
-        return t.date >= startDate && t.date <= endDate;
-      })
+    const normalized: TransactionItem[] = await Promise.all(transactions
+      .filter((t: YnabTransaction) => t.date >= startDate && t.date <= endDate)
       .sort((a: YnabTransaction, b: YnabTransaction) => b.amount - a.amount)
-      .map((t: YnabTransaction) => ({
+      .map(async (t: YnabTransaction) => ({
         date: t.date,
-        payee_name: t.payee_name ?? t.payeeName ?? t.payee ?? '',
+        payee_name: t.payee_name ?? t.payeeName ?? t.payee ?? await fetchParentTransactionPayee(t.parent_transaction_id),
         decimal_amount: typeof t.amount === 'number' ? t.amount / 1000 : 0,
-      }));
+      })));
     return NextResponse.json(normalized, { status: 200 });
   } catch {
     return NextResponse.json({ error: 'Failed to contact YNAB' }, { status: 502 });
   }
 }
-
-
