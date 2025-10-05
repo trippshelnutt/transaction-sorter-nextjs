@@ -8,7 +8,7 @@ It was built to handle sorting split transactions from YNAB by category that did
 
 ## Tech
 - Next.js - web development framework
-- Vercel - web hosting/pipelines
+- Netlify - web hosting/pipelines
 - React - UI library
 - Material UI - component library
 - TypeScript - language
