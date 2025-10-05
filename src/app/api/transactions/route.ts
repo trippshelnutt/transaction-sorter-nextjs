@@ -11,15 +11,11 @@ function badRequest(message: string): NextResponse {
 }
 
 function toMonthBounds(year: number, month: number): { startDate: string; endDate: string } {
-  const start = new Date(year, month - 1, 1);
-  const end = new Date(year, month, 0); // last day of month
+  const start = Date.UTC(year, month - 1, 1);
+  const end = Date.UTC(year, month, 0); // last day of month
   // ISO without time to keep parity with UI parsing (it uses new Date(date))
-  const startDate = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()))
-    .toISOString()
-    .slice(0, 10);
-  const endDate = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
-    .toISOString()
-    .slice(0, 10);
+  const startDate = new Date(start).toISOString().slice(0, 10);
+  const endDate = new Date(end).toISOString().slice(0, 10);
   return { startDate, endDate };
 }
 

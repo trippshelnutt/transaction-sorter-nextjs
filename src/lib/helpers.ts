@@ -6,5 +6,5 @@ export function formatPrice(amount: number) {
 }
 
 export function formatDate(date: string) {
-  return new Date(date).toLocaleDateString('en-US');
+  return new Date(date).toLocaleDateString('en-US', { timeZone: 'UTC' });
 }
