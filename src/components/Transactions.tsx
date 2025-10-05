@@ -22,12 +22,11 @@ export default function App() {
   const [year, setYear] = React.useState(currentYear);
 
   const handleFetchClicked = async () => {
-    const apiUrl = new URL(
-      `/Prod/api/transactions/${category}/${year}/${month}`,
-      'https://d06jy95pk9.execute-api.us-east-1.amazonaws.com'
-    );
-    console.log(apiUrl.href);
-    const response = await fetch(apiUrl.href);
+    const localUrl = new URL(`/api/transactions`, window.location.origin);
+    localUrl.searchParams.set('category', category);
+    localUrl.searchParams.set('year', String(year));
+    localUrl.searchParams.set('month', String(month));
+    const response = await fetch(localUrl.href);
     const data = await response.json();
 
     setRows(data);
