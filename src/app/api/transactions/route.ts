@@ -23,6 +23,18 @@ function toMonthBounds(year: number, month: number): { startDate: string; endDat
   return { startDate, endDate };
 }
 
+// YNAB API constants from environment
+const YNAB_API_URL = process.env.YNAB_API_URL || 'https://api.ynab.com/v1';
+const YNAB_BUDGET_ID = process.env.YNAB_BUDGET_ID;
+const YNAB_ACCESS_TOKEN = process.env.YNAB_ACCESS_TOKEN;
+
+// Map category name to YNAB category ID (should be set in env or config)
+function getCategoryId(category: string): string | undefined {
+  // Example: process.env.YNAB_CATEGORY_FOOD for category 'food'
+  const key = `YNAB_CATEGORY_${category.toUpperCase()}`;
+  return process.env[key];
+}
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
   const category = url.searchParams.get('category') ?? '';
@@ -41,53 +53,55 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return badRequest('Invalid month');
   }
 
-  const { startDate, endDate } = toMonthBounds(year, month);
-
-  const upstreamBase = process.env.UPSTREAM_BASE_URL;
-  if (!upstreamBase) {
+  if (!YNAB_API_URL || !YNAB_BUDGET_ID || !YNAB_ACCESS_TOKEN) {
     return NextResponse.json(
-      { error: 'Server not configured: missing UPSTREAM_BASE_URL' },
+      { error: 'Server not configured: missing YNAB_API_URL, YNAB_BUDGET_ID, or YNAB_ACCESS_TOKEN' },
       { status: 500 }
     );
   }
 
-  // Default upstream path mirrors existing client usage: /Prod/api/transactions/{category}/{year}/{month}
-  const upstreamUrl = new URL(`/Prod/api/transactions/${encodeURIComponent(category)}/${year}/${month}`, upstreamBase);
-
-  const headers: Record<string, string> = {};
-  if (process.env.UPSTREAM_AUTH_HEADER && process.env.UPSTREAM_AUTH_TOKEN) {
-    headers[process.env.UPSTREAM_AUTH_HEADER] = process.env.UPSTREAM_AUTH_TOKEN;
+  const categoryId = getCategoryId(category);
+  if (!categoryId) {
+    return badRequest(`Unknown or unconfigured category: ${category}`);
   }
 
+  const { startDate, endDate } = toMonthBounds(year, month);
+
+  // Build YNAB API URL for category transactions
+  const ynabUrl = `${YNAB_API_URL}/budgets/${YNAB_BUDGET_ID}/categories/${categoryId}/transactions?since_date=${startDate}`;
+
   try {
-    const upstreamResponse = await fetch(upstreamUrl.href, { headers, cache: 'no-store' });
-    if (!upstreamResponse.ok) {
+    const ynabResponse = await fetch(ynabUrl, {
+      headers: {
+        'Authorization': `Bearer ${YNAB_ACCESS_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+    if (!ynabResponse.ok) {
       return NextResponse.json(
-        { error: 'Upstream request failed', status: upstreamResponse.status },
+        { error: 'YNAB request failed', status: ynabResponse.status },
         { status: 502 }
       );
     }
-    const raw = await upstreamResponse.json();
-
-    // Normalize to TransactionItem[]; pass-through if already in desired shape
-    const normalized: TransactionItem[] = Array.isArray(raw)
-      ? raw.map((t: any) => ({
-          date: t.date,
-          payee_name: t.payee_name ?? t.payeeName ?? t.payee,
-          decimal_amount:
-            typeof t.decimal_amount === 'number'
-              ? t.decimal_amount
-              : typeof t.decimalAmount === 'number'
-              ? t.decimalAmount
-              : typeof t.amount === 'number'
-              ? t.amount / 1000 / 100 // fallback if amount is milliunits then cents; adjust if needed
-              : 0,
-        }))
-      : [];
-
+    const raw = await ynabResponse.json();
+    // YNAB response: { data: { transactions: [...] } }
+    const transactions = raw?.data?.transactions || [];
+    // Filter and normalize
+    const normalized: TransactionItem[] = transactions
+      .filter((t: any) => {
+        // Only include transactions within the month
+        return t.date >= startDate && t.date <= endDate;
+      })
+      .sort((a: any, b: any) => b.amount - a.amount)
+      .map((t: any) => ({
+        date: t.date,
+        payee_name: t.payee_name ?? t.payeeName ?? t.payee ?? '',
+        decimal_amount: typeof t.amount === 'number' ? t.amount / 1000 : 0,
+      }));
     return NextResponse.json(normalized, { status: 200 });
   } catch (err) {
-    return NextResponse.json({ error: 'Failed to contact upstream' }, { status: 502 });
+    return NextResponse.json({ error: 'Failed to contact YNAB' }, { status: 502 });
   }
 }
 
