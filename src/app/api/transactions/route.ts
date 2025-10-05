@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth0 } from '@/lib/auth0';
 
 interface TransactionItem {
   date: string;
@@ -41,6 +42,12 @@ type YnabTransaction = {
 };
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // Require authentication
+  const session = await auth0.getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const url = new URL(request.url);
   const category = url.searchParams.get('category') ?? '';
   const yearParam = url.searchParams.get('year');
