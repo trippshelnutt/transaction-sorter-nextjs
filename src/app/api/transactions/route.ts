@@ -31,6 +31,15 @@ function getCategoryId(category: string): string | undefined {
   return process.env[key];
 }
 
+type YnabTransaction = {
+  date: string;
+  amount: number;
+  payee_name?: string;
+  payeeName?: string;
+  payee?: string;
+  // ...other fields if needed
+};
+
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
   const category = url.searchParams.get('category') ?? '';
@@ -85,18 +94,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const transactions = raw?.data?.transactions || [];
     // Filter and normalize
     const normalized: TransactionItem[] = transactions
-      .filter((t: any) => {
+      .filter((t: YnabTransaction) => {
         // Only include transactions within the month
         return t.date >= startDate && t.date <= endDate;
       })
-      .sort((a: any, b: any) => b.amount - a.amount)
-      .map((t: any) => ({
+      .sort((a: YnabTransaction, b: YnabTransaction) => b.amount - a.amount)
+      .map((t: YnabTransaction) => ({
         date: t.date,
         payee_name: t.payee_name ?? t.payeeName ?? t.payee ?? '',
         decimal_amount: typeof t.amount === 'number' ? t.amount / 1000 : 0,
       }));
     return NextResponse.json(normalized, { status: 200 });
-  } catch (err) {
+  } catch {
     return NextResponse.json({ error: 'Failed to contact YNAB' }, { status: 502 });
   }
 }
