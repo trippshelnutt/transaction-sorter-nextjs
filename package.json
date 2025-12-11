@@ -11,25 +11,25 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^4.4.2",
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^7.0.2",
-    "@mui/material": "^7.0.2",
-    "next": "15.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@auth0/nextjs-auth0": "^4",
+    "@emotion/react": "^11",
+    "@emotion/styled": "^11",
+    "@mui/icons-material": "^7",
+    "@mui/material": "^7",
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@trivago/prettier-plugin-sort-imports": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.0",
-    "prettier": "^3.5.3",
+    "eslint-config-next": "^15",
+    "prettier": "^3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
